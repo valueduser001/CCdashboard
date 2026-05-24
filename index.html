@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Wireless Revenue OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #1e66ff;
+  --blue-dim: #1e66ff22;
+  --blue-mid: #1e66ff55;
+  --green: #00c48c;
+  --green-dim: #00c48c20;
+  --red: #ff3b5c;
+  --red-dim: #ff3b5c20;
+  --amber: #ffb020;
+  --amber-dim: #ffb02020;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --surface2: #f0f1f7;
+  --border: #e4e6f0;
+  --text: #0d0f1a;
+  --text2: #5a5f7a;
+  --text3: #9499b8;
+  --sidebar-w: 228px;
+  --header-h: 60px;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 16px rgba(30,102,255,0.07), 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-lg: 0 8px 40px rgba(30,102,255,0.13), 0 2px 8px rgba(0,0,0,0.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ── GRID BG ── */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(30,102,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,102,255,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* ── LAYOUT ── */
+#app{display:flex;height:100vh;position:relative;z-index:1}
+
+/* ── SIDEBAR ── */
+#sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width 0.3s cubic-bezier(0.4,0,0.2,1)}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:18px;height:18px}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-0.5px;color:var(--text)}
+.logo-text span{color:var(--blue)}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--text3);padding:16px 16px 6px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:2px 8px;border-radius:10px;cursor:pointer;transition:all 0.15s;color:var(--text2);font-size:13px;font-weight:500;position:relative;white-space:nowrap}
+.nav-item:hover{background:var(--blue-dim);color:var(--blue)}
+.nav-item.active{background:var(--blue-dim);color:var(--blue)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--blue);border-radius:0 3px 3px 0;left:-6px}
+.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:20px}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.sync-status{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--surface2);cursor:pointer}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse-dot 2s infinite}
+.sync-dot.connected{background:var(--green)}
+.sync-dot.syncing{background:var(--amber)}
+.sync-dot.offline{background:var(--red);animation:none}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.85)}}
+.sync-info{flex:1;min-width:0}
+.sync-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);font-weight:500}
+.sync-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3)}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+.topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;letter-spacing:-0.3px;flex:1}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;font-family:'Instrument Sans',sans-serif}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1555e0;box-shadow:0 4px 16px rgba(30,102,255,0.35)}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--border);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.offline-banner{background:var(--red);color:#fff;text-align:center;padding:6px;font-size:12px;font-family:'DM Mono',monospace;font-weight:500;display:none}
+.offline-banner.show{display:block}
+#content{flex:1;overflow-y:auto;padding:24px}
+
+/* ── KPI CARD ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform 0.15s,box-shadow 0.15s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue)}
+.kpi-card.green::after{background:var(--green)}
+.kpi-card.red::after{background:var(--red)}
+.kpi-card.amber::after{background:var(--amber)}
+.kpi-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.kpi-value{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-1px;color:var(--text);line-height:1}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:6px}
+.kpi-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 6px;border-radius:20px;margin-top:8px}
+.kpi-delta.up{background:var(--green-dim);color:var(--green)}
+.kpi-delta.down{background:var(--red-dim);color:var(--red)}
+.kpi-icon{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--blue-dim)}
+.kpi-icon.green{background:var(--green-dim)}
+.kpi-icon.red{background:var(--red-dim)}
+.kpi-icon.amber{background:var(--amber-dim)}
+
+/* ── PROGRESS BAR ── */
+.progress-bar-wrap{margin-top:8px}
+.progress-bar-track{height:6px;background:var(--surface2);border-radius:10px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:10px;background:var(--blue);transition:width 1s cubic-bezier(0.4,0,0.2,1)}
+.progress-bar-fill.green{background:var(--green)}
+.progress-bar-fill.red{background:var(--red)}
+.progress-bar-fill.amber{background:var(--amber)}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ── SECTION ── */
+.section{margin-bottom:24px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;letter-spacing:-0.3px}
+.section-subtitle{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;letter-spacing:-0.2px}
+
+/* ── TABLE ── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.data-table td{padding:11px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--bg)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-gold{background:#fff3cd;color:#b8860b}
+.badge-silver{background:#f0f0f0;color:#666}
+.badge-bronze{background:#fdebd0;color:#9c5c1a}
+.badge-red{background:var(--red-dim);color:var(--red)}
+.badge-green{background:var(--green-dim);color:var(--green)}
+.badge-blue{background:var(--blue-dim);color:var(--blue)}
+.badge-amber{background:var(--amber-dim);color:var(--amber)}
+.rank-num{font-family:'Syne',sans-serif;font-weight:800;font-size:15px}
+.momentum-up::after{content:'↑';color:var(--green);font-size:11px;margin-left:4px}
+.momentum-down::after{content:'↓';color:var(--red);font-size:11px;margin-left:4px}
+.momentum-flat::after{content:'→';color:var(--text3);font-size:11px;margin-left:4px}
+
+/* ── CHARTS ── */
+.chart-wrap{position:relative}
+svg.chart{overflow:visible}
+.chart-bar{transition:opacity 0.15s}
+.chart-bar:hover{opacity:0.75;cursor:pointer}
+
+/* ── FUNNEL ── */
+.funnel-wrap{display:flex;flex-direction:column;gap:4px;align-items:center}
+.funnel-stage{display:flex;align-items:center;gap:12px;width:100%}
+.funnel-bar-wrap{flex:1;position:relative;height:36px;display:flex;align-items:center}
+.funnel-bar{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;transition:width 1s cubic-bezier(0.4,0,0.2,1)}
+.funnel-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);width:90px;text-align:right;flex-shrink:0}
+.funnel-val{font-size:11px;color:var(--text2);width:60px;text-align:right;flex-shrink:0}
+.funnel-arrow{text-align:center;font-size:18px;color:var(--border);margin:-2px 0}
+
+/* ── RING ── */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.ring-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.ring-value{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.5px}
+
+/* ── ALERT CARDS ── */
+.alert-card{border-radius:10px;padding:14px 16px;margin-bottom:10px;border-left:4px solid;display:flex;align-items:flex-start;gap:12px}
+.alert-card.red{background:var(--red-dim);border-color:var(--red)}
+.alert-card.amber{background:var(--amber-dim);border-color:var(--amber)}
+.alert-card.green{background:var(--green-dim);border-color:var(--green)}
+.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.alert-title{font-weight:700;font-size:13px;margin-bottom:2px}
+.alert-desc{font-size:12px;color:var(--text2)}
+
+/* ── GOAL TRACKER ── */
+.goal-hero{background:linear-gradient(135deg,#0d1f6e 0%,#1e66ff 60%,#3d8eff 100%);border-radius:var(--radius);padding:28px 28px 20px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden}
+.goal-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(255,255,255,0.05);border-radius:50%}
+.goal-hero::after{content:'';position:absolute;bottom:-60px;right:60px;width:150px;height:150px;background:rgba(255,255,255,0.04);border-radius:50%}
+.goal-hero-title{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;opacity:0.7;margin-bottom:8px}
+.goal-hero-amount{font-family:'Syne',sans-serif;font-weight:800;font-size:44px;letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.goal-hero-sub{font-size:13px;opacity:0.65;margin-bottom:20px}
+.goal-progress-track{height:8px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden;margin-bottom:6px}
+.goal-progress-fill{height:100%;border-radius:10px;background:#fff;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+.goal-stats{display:flex;gap:24px;margin-top:12px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.15)}
+.goal-stat{flex:1}
+.goal-stat-label{font-size:10px;opacity:0.6;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+.goal-stat-value{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-top:2px}
+
+/* ── TABS ── */
+.page{display:none}
+.page.active{display:block;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SHEETS CONFIG MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(13,15,26,0.5);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--radius);padding:28px;width:500px;max-width:calc(100vw - 40px);box-shadow:var(--shadow-lg);transform:translateY(-8px);transition:transform 0.2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:block}
+.form-input{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-family:'DM Mono',monospace;font-size:12px;color:var(--text);outline:none;transition:border-color 0.15s}
+.form-input:focus{border-color:var(--blue)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* ── LEAD FORM ── */
+.lead-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lead-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #sidebar{width:60px}
+  .nav-item span,.logo-text,.sidebar-section-label,.sync-info{display:none}
+  .logo-mark{margin:0 auto}
+  #content{padding:16px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .goal-hero-amount{font-size:32px}
+}
+
+/* ── COUNTER ANIM ── */
+.counting{display:inline-block}
+
+/* ── SPARKLINE ── */
+.sparkline{display:inline-block;vertical-align:middle}
+
+/* ── GRID LAYOUTS ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:1000px){.two-col,.three-col{grid-template-columns:1fr}}
+
+/* health score ring */
+.health-ring{display:flex;align-items:center;gap:20px}
+.health-score{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;letter-spacing:-2px}
+.health-label{font-size:12px;color:var(--text3);margin-top:2px}
+.health-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block;margin-top:6px}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="logo-text">APE<span>X</span></div>
+    </div>
+    <div class="sidebar-section-label">Revenue</div>
+    <div class="nav-item active" onclick="navigate('exec')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+      <span>Command Center</span>
+    </div>
+    <div class="nav-item" onclick="navigate('stores')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <span>Store Performance</span>
+    </div>
+    <div class="nav-item" onclick="navigate('reps')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <span>Rep Leaderboard</span>
+    </div>
+    <div class="nav-item" onclick="navigate('activations')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <span>Activation Velocity</span>
+    </div>
+    <div class="nav-item" onclick="navigate('accessories')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      <span>Accessories Engine</span>
+    </div>
+    <div class="sidebar-section-label">Intelligence</div>
+    <div class="nav-item" onclick="navigate('funnel')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+      <span>Conversion Funnel</span>
+    </div>
+    <div class="nav-item" onclick="navigate('flow')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <span>Customer Flow</span>
+    </div>
+    <div class="nav-item" onclick="navigate('profit')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+      <span>Profit Optimization</span>
+    </div>
+    <div class="sidebar-section-label">Action</div>
+    <div class="nav-item" onclick="navigate('coaching')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+      <span>Coaching & Alerts</span>
+      <span class="nav-badge" id="alert-badge">3</span>
+    </div>
+    <div class="nav-item" onclick="navigate('goals')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+      <span>Daily Goal Tracker</span>
+    </div>
+    <div class="nav-item" onclick="navigate('leads')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <span>Lead Capture</span>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sync-status" onclick="openSheetsConfig()">
+        <div class="sync-dot connected" id="sync-dot"></div>
+        <div class="sync-info">
+          <div class="sync-label" id="sync-label">Connected</div>
+          <div class="sync-time" id="sync-time">--:--</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div id="main">
+    <div class="offline-banner" id="offline-banner">⚠ Offline Mode — Using Local Cache. Google Sheets unavailable.</div>
+    <div id="topbar">
+      <div class="topbar-title" id="page-title">Executive Revenue Command Center</div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="refreshData()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Refresh
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="exportLeads()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Export Leads
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openSheetsConfig()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+          Sheets Config
+        </button>
+      </div>
+    </div>
+    <div id="content">
+
+      <!-- PAGE: EXEC -->
+      <div class="page active" id="page-exec">
+        <div class="goal-hero">
+          <div class="goal-hero-title">Annual Revenue Target</div>
+          <div class="goal-hero-amount" id="exec-rev">$0</div>
+          <div class="goal-hero-sub" id="exec-rev-sub">of $1,000,000 goal</div>
+          <div class="goal-progress-track"><div class="goal-progress-fill" id="exec-progress" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.7;margin-top:4px">
+            <span id="exec-pct">0%</span><span>$1,000,000</span>
+          </div>
+          <div class="goal-stats">
+            <div class="goal-stat"><div class="goal-stat-label">Daily Run-Rate Needed</div><div class="goal-stat-value" id="exec-runrate">$0</div></div>
+            <div class="goal-stat"><div class="goal-stat-label">Days Remaining</div><div class="goal-stat-value" id="exec-days">0</div></div>
+            <div class="goal-stat"><div class="goal-stat-label">Forecast (EOY)</div><div class="goal-stat-value" id="exec-forecast">$0</div></div>
+            <div class="goal-stat"><div class="goal-stat-label">Momentum</div><div class="goal-stat-value" id="exec-momentum">—</div></div>
+          </div>
+        </div>
+        <div class="kpi-grid" id="exec-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Store Health Scores</div></div>
+            <div id="exec-health-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Revenue by Store (Last 7 Days)</div></div>
+            <div class="chart-wrap"><svg id="exec-bar-chart" class="chart" width="100%" height="180"></svg></div>
+          </div>
+        </div>
+        <div style="margin-top:16px" class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Top Performer</div></div>
+            <div id="exec-top-rep"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Risk & Opportunity</div></div>
+            <div id="exec-alerts"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: STORES -->
+      <div class="page" id="page-stores">
+        <div class="kpi-grid" id="stores-kpis"></div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Store Performance Engine</div>
+            <div style="font-size:11px;color:var(--text3)" id="stores-updated"></div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table" id="stores-table">
+              <thead><tr>
+                <th>Store</th><th>Revenue</th><th>Activations</th><th>Accessories</th><th>Conv%</th><th>Profit</th><th>Goal%</th><th>Health</th>
+              </tr></thead>
+              <tbody id="stores-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Revenue Trend (Daily KPIs)</div></div>
+            <svg id="stores-line-chart" class="chart" width="100%" height="200" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: REPS -->
+      <div class="page" id="page-reps">
+        <div class="kpi-grid" id="reps-kpis"></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Sales Rep Leaderboard</div></div>
+          <div style="overflow-x:auto">
+            <table class="data-table" id="reps-table">
+              <thead><tr>
+                <th>Rank</th><th>Rep</th><th>Store</th><th>Revenue</th><th>Activations</th><th>Accessories</th><th>Conv%</th><th>Score</th><th>Status</th>
+              </tr></thead>
+              <tbody id="reps-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Rep Performance Bars</div></div>
+            <svg id="reps-bar-chart" class="chart" width="100%" height="220" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: ACTIVATIONS -->
+      <div class="page" id="page-activations">
+        <div class="kpi-grid" id="act-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Activation Pace vs Goal</div></div>
+            <svg id="act-gauge" width="100%" height="180" style="display:block"></svg>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Daily Activations Trend</div></div>
+            <svg id="act-trend" class="chart" width="100%" height="180" style="display:block"></svg>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Activations by Store</div></div>
+            <svg id="act-by-store" class="chart" width="100%" height="200" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: ACCESSORIES -->
+      <div class="page" id="page-accessories">
+        <div class="kpi-grid" id="acc-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Attach Rate by Rep</div></div>
+            <svg id="acc-bar" class="chart" width="100%" height="220" style="display:block"></svg>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Accessories → Profit Funnel</div></div>
+            <div class="funnel-wrap" id="acc-funnel" style="padding:8px 0"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Accessories Revenue Trend</div></div>
+            <svg id="acc-trend" class="chart" width="100%" height="180" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: FUNNEL -->
+      <div class="page" id="page-funnel">
+        <div class="kpi-grid" id="funnel-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Conversion Funnel Intelligence</div></div>
+            <div class="funnel-wrap" id="main-funnel" style="padding:16px 0"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Stage Drop-off Analysis</div></div>
+            <div id="funnel-dropoff"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Conversion Rate by Store</div></div>
+            <svg id="funnel-by-store" class="chart" width="100%" height="200" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: FLOW -->
+      <div class="page" id="page-flow">
+        <div class="kpi-grid" id="flow-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Customer Traffic Heatmap (Week)</div></div>
+            <div id="flow-heatmap" style="padding:8px 0"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Lead Status Pipeline</div></div>
+            <div id="flow-pipeline"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Lead-to-Sale Conversion</div></div>
+            <svg id="flow-leads-chart" class="chart" width="100%" height="180" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: PROFIT -->
+      <div class="page" id="page-profit">
+        <div class="kpi-grid" id="profit-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Profit per Activation by Store</div></div>
+            <svg id="profit-bar" class="chart" width="100%" height="220" style="display:block"></svg>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Profit Optimization Rings</div></div>
+            <div style="display:flex;justify-content:space-around;padding:16px 0" id="profit-rings"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Cumulative Profit Trend</div></div>
+            <svg id="profit-trend" class="chart" width="100%" height="180" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: COACHING -->
+      <div class="page" id="page-coaching">
+        <div class="kpi-grid" id="coaching-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🚨 Priority Action Items</div></div>
+            <div id="coaching-alerts"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Rep Coaching Flags</div></div>
+            <div id="coaching-reps"></div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Store Risk Matrix</div></div>
+            <div id="coaching-matrix" style="padding:8px 0"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: GOALS -->
+      <div class="page" id="page-goals">
+        <div class="goal-hero" style="background:linear-gradient(135deg,#0a2e1f 0%,#00c48c 100%)">
+          <div class="goal-hero-title">Daily Revenue Goal Tracker</div>
+          <div class="goal-hero-amount" id="goals-today">$0</div>
+          <div class="goal-hero-sub" id="goals-today-sub">Today's Revenue vs Daily Goal</div>
+          <div class="goal-progress-track"><div class="goal-progress-fill" id="goals-today-bar" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.7;margin-top:4px">
+            <span id="goals-pct">0%</span><span id="goals-goal-label">$2,740</span>
+          </div>
+          <div class="goal-stats">
+            <div class="goal-stat"><div class="goal-stat-label">Hours Remaining</div><div class="goal-stat-value" id="goals-hours">—</div></div>
+            <div class="goal-stat"><div class="goal-stat-label">Revenue/Hour Needed</div><div class="goal-stat-value" id="goals-per-hour">—</div></div>
+            <div class="goal-stat"><div class="goal-stat-label">Best Day (30d)</div><div class="goal-stat-value" id="goals-best">—</div></div>
+            <div class="goal-stat"><div class="goal-stat-label">7-Day Avg</div><div class="goal-stat-value" id="goals-avg">—</div></div>
+          </div>
+        </div>
+        <div class="kpi-grid" id="goals-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Daily Revenue (Last 30 Days)</div></div>
+            <svg id="goals-chart" class="chart" width="100%" height="200" style="display:block"></svg>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">KPI Snapshot — Today</div></div>
+            <div id="goals-snapshot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: LEADS -->
+      <div class="page" id="page-leads">
+        <div class="kpi-grid" id="leads-kpis"></div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Capture New Lead</div></div>
+            <div class="lead-form-grid">
+              <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="lf-fname" placeholder="John"></div>
+              <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="lf-lname" placeholder="Smith"></div>
+              <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="lf-phone" placeholder="(555) 000-0000"></div>
+              <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="lf-email" placeholder="john@email.com"></div>
+              <div class="form-group"><label class="form-label">Store</label>
+                <select class="form-input" id="lf-store"><option value="">Select Store…</option></select>
+              </div>
+              <div class="form-group"><label class="form-label">Rep</label>
+                <select class="form-input" id="lf-rep"><option value="">Select Rep…</option></select>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="submitLead()" style="flex:1">Submit Lead → Sheets</button>
+              <button class="btn btn-ghost" onclick="clearLeadForm()">Clear</button>
+            </div>
+            <div id="lead-msg" style="margin-top:10px;font-size:12px;display:none"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Recent Leads</div></div>
+            <div style="overflow-x:auto">
+              <table class="data-table" id="leads-table">
+                <thead><tr><th>Name</th><th>Phone</th><th>Store</th><th>Rep</th><th>Status</th><th>Time</th></tr></thead>
+                <tbody id="leads-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- SHEETS CONFIG MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">Google Sheets Configuration</div>
+    <div class="modal-sub">Connect your Google Sheets for live data sync. Share your sheet publicly or use API key.</div>
+    <div class="form-group"><label class="form-label">Sheet ID (from URL)</label><input class="form-input" id="cfg-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Stores GID</label><input class="form-input" id="cfg-gid-stores" placeholder="0" value="0"></div>
+      <div class="form-group"><label class="form-label">Reps GID</label><input class="form-input" id="cfg-gid-reps" placeholder="1" value="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Leads GID</label><input class="form-input" id="cfg-gid-leads" placeholder="2" value="2"></div>
+      <div class="form-group"><label class="form-label">KPIs GID</label><input class="form-input" id="cfg-gid-kpis" placeholder="3" value="3"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Apps Script URL (for write-back)</label><input class="form-input" id="cfg-script-url" placeholder="https://script.google.com/macros/s/AKfycbx…/exec"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Auto-Refresh (seconds)</label><input class="form-input" id="cfg-interval" type="number" value="30" min="10" max="300"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:0">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+          <input type="checkbox" id="cfg-auto" checked style="width:16px;height:16px"> Auto-refresh enabled
+        </label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveConfig()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const Config = {
+  sheetId: '',
+  gids: { stores: '0', reps: '1', leads: '2', kpis: '3' },
+  scriptUrl: '',
+  refreshInterval: 30,
+  autoRefresh: true,
+  annualGoal: 1000000,
+  dailyGoal: Math.round(1000000 / 365),
+  load() {
+    const s = localStorage.getItem('apex_config');
+    if (s) Object.assign(this, JSON.parse(s));
+  },
+  save() {
+    localStorage.setItem('apex_config', JSON.stringify({
+      sheetId: this.sheetId, gids: this.gids,
+      scriptUrl: this.scriptUrl, refreshInterval: this.refreshInterval,
+      autoRefresh: this.autoRefresh
+    }));
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════════════════════
+const DataLayer = {
+  stores: [],
+  reps: [],
+  leads: [],
+  kpis: [],
+  lastSync: null,
+  isOffline: false,
+  _refreshTimer: null,
+
+  async loadAllData() {
+    updateSyncStatus('syncing');
+    try {
+      await Promise.all([
+        this.syncStores(),
+        this.syncReps(),
+        this.syncLeads(),
+        this.syncKPIs()
+      ]);
+      this.lastSync = new Date();
+      this.isOffline = false;
+      this._cacheToLocal();
+      updateSyncStatus('connected');
+      renderAllPages();
+    } catch(e) {
+      console.warn('Sheets fetch failed, falling back to local:', e);
+      this._loadFromLocal();
+      this.isOffline = true;
+      updateSyncStatus('offline');
+      document.getElementById('offline-banner').classList.add('show');
+      renderAllPages();
+    }
+  },
+
+  csvUrl(gid) {
+    return `https://docs.google.com/spreadsheets/d/${Config.sheetId}/export?format=csv&gid=${gid}`;
+  },
+
+  async fetchCSV(gid) {
+    if (!Config.sheetId) throw new Error('No sheet ID');
+    const r = await fetch(this.csvUrl(gid), { cache: 'no-store' });
+    if (!r.ok) throw new Error('Fetch failed');
+    const text = await r.text();
+    return parseCSV(text);
+  },
+
+  async syncStores() {
+    const rows = await this.fetchCSV(Config.gids.stores);
+    if (rows.length < 2) return;
+    const [headers, ...data] = rows;
+    this.stores = data.map(row => {
+      const o = {};
+      headers.forEach((h,i) => o[h.trim()] = row[i] ? row[i].trim() : '');
+      return {
+        store_id: o.store_id || o['store_id'],
+        store_name: o.store_name || 'Unknown',
+        revenue: parseFloat(o.revenue) || 0,
+        activations: parseInt(o.activations) || 0,
+        accessories_revenue: parseFloat(o.accessories_revenue) || 0,
+        conversion_rate: parseFloat(o.conversion_rate) || 0,
+        profit: parseFloat(o.profit) || 0,
+        goal_progress: parseFloat(o.goal_progress) || 0
+      };
+    });
+  },
+
+  async syncReps() {
+    const rows = await this.fetchCSV(Config.gids.reps);
+    if (rows.length < 2) return;
+    const [headers, ...data] = rows;
+    this.reps = data.map(row => {
+      const o = {};
+      headers.forEach((h,i) => o[h.trim()] = row[i] ? row[i].trim() : '');
+      return {
+        rep_id: o.rep_id,
+        rep_name: o.rep_name || 'Unknown',
+        store_id: o.store_id,
+        activations: parseInt(o.activations) || 0,
+        revenue: parseFloat(o.revenue) || 0,
+        accessories: parseFloat(o.accessories) || 0,
+        conversion_rate: parseFloat(o.conversion_rate) || 0,
+        performance_score: parseFloat(o.performance_score) || 0
+      };
+    });
+  },
+
+  async syncLeads() {
+    const rows = await this.fetchCSV(Config.gids.leads);
+    if (rows.length < 2) return;
+    const [headers, ...data] = rows;
+    this.leads = data.map(row => {
+      const o = {};
+      headers.forEach((h,i) => o[h.trim()] = row[i] ? row[i].trim() : '');
+      return {
+        lead_id: o.lead_id || o.id,
+        first_name: o.first_name || '',
+        last_name: o.last_name || '',
+        phone: o.phone || '',
+        email: o.email || '',
+        store_id: o.store_id || '',
+        rep_id: o.rep_id || '',
+        timestamp: o.timestamp || new Date().toISOString(),
+        status: o.status || 'New'
+      };
+    });
+  },
+
+  async syncKPIs() {
+    const rows = await this.fetchCSV(Config.gids.kpis);
+    if (rows.length < 2) return;
+    const [headers, ...data] = rows;
+    this.kpis = data.map(row => {
+      const o = {};
+      headers.forEach((h,i) => o[h.trim()] = row[i] ? row[i].trim() : '');
+      return {
+        date: o.date || '',
+        store_id: o.store_id || '',
+        revenue: parseFloat(o.revenue) || 0,
+        activations: parseInt(o.activations) || 0,
+        accessories: parseFloat(o.accessories) || 0,
+        profit: parseFloat(o.profit) || 0,
+        traffic_estimate: parseInt(o.traffic_estimate) || 0
+      };
+    });
+  },
+
+  async exportLead(lead) {
+    if (!Config.scriptUrl) { this.leads.push(lead); this._cacheToLocal(); return false; }
+    const r = await fetch(Config.scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'appendLead', data: lead })
+    });
+    this.leads.push(lead);
+    this._cacheToLocal();
+    return r.ok;
+  },
+
+  async exportKPI(snapshot) {
+    if (!Config.scriptUrl) return false;
+    await fetch(Config.scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'appendKPI', data: snapshot })
+    });
+    return true;
+  },
+
+  _cacheToLocal() {
+    localStorage.setItem('apex_stores', JSON.stringify(this.stores));
+    localStorage.setItem('apex_reps', JSON.stringify(this.reps));
+    localStorage.setItem('apex_leads', JSON.stringify(this.leads));
+    localStorage.setItem('apex_kpis', JSON.stringify(this.kpis));
+  },
+
+  _loadFromLocal() {
+    this.stores = JSON.parse(localStorage.getItem('apex_stores') || '[]');
+    this.reps = JSON.parse(localStorage.getItem('apex_reps') || '[]');
+    this.leads = JSON.parse(localStorage.getItem('apex_leads') || '[]');
+    this.kpis = JSON.parse(localStorage.getItem('apex_kpis') || '[]');
+    if (!this.stores.length) this._loadDemoData();
+  },
+
+  _loadDemoData() {
+    // Demo data for first-run experience
+    this.stores = [
+      { store_id:'S1', store_name:'Downtown Flagship', revenue:312450, activations:892, accessories_revenue:67800, conversion_rate:34.2, profit:89400, goal_progress:31.2 },
+      { store_id:'S2', store_name:'Westside Mall', revenue:198700, activations:621, accessories_revenue:41200, conversion_rate:28.7, profit:54300, goal_progress:19.9 },
+      { store_id:'S3', store_name:'Airport Terminal', revenue:156800, activations:498, accessories_revenue:28900, conversion_rate:22.1, profit:41200, goal_progress:15.7 },
+      { store_id:'S4', store_name:'Northgate Center', revenue:287300, activations:754, accessories_revenue:58400, conversion_rate:31.6, profit:76800, goal_progress:28.7 },
+      { store_id:'S5', store_name:'Eastpoint Plaza', revenue:112600, activations:389, accessories_revenue:19800, conversion_rate:19.4, profit:28900, goal_progress:11.3 },
+    ];
+    this.reps = [
+      { rep_id:'R1', rep_name:'Jordan Alvarez', store_id:'S1', activations:234, revenue:89400, accessories:18700, conversion_rate:41.2, performance_score:94 },
+      { rep_id:'R2', rep_name:'Kayla Martinez', store_id:'S1', activations:198, revenue:71200, accessories:14900, conversion_rate:38.7, performance_score:89 },
+      { rep_id:'R3', rep_name:'Devon Patel', store_id:'S4', activations:210, revenue:81300, accessories:16400, conversion_rate:37.1, performance_score:91 },
+      { rep_id:'R4', rep_name:'Simone Chen', store_id:'S2', activations:187, revenue:68400, accessories:12800, conversion_rate:33.4, performance_score:82 },
+      { rep_id:'R5', rep_name:'Marcus Webb', store_id:'S4', activations:176, revenue:64200, accessories:11600, conversion_rate:30.9, performance_score:78 },
+      { rep_id:'R6', rep_name:'Priya Singh', store_id:'S3', activations:161, revenue:59800, accessories:10200, conversion_rate:27.3, performance_score:72 },
+      { rep_id:'R7', rep_name:'Tyler Brooks', store_id:'S5', activations:142, revenue:52100, accessories:8900, conversion_rate:24.6, performance_score:65 },
+      { rep_id:'R8', rep_name:'Aaliyah Jones', store_id:'S2', activations:128, revenue:46700, accessories:7400, conversion_rate:21.2, performance_score:59 },
+    ];
+    const today = new Date();
+    this.kpis = Array.from({length:30}, (_,i) => {
+      const d = new Date(today); d.setDate(d.getDate() - (29 - i));
+      const base = 2200 + Math.random()*1200;
+      return {
+        date: d.toISOString().slice(0,10),
+        store_id: 'ALL',
+        revenue: Math.round(base * (0.85 + Math.random()*0.3)),
+        activations: Math.round(10 + Math.random()*8),
+        accessories: Math.round(base * 0.18),
+        profit: Math.round(base * 0.28),
+        traffic_estimate: Math.round(60 + Math.random()*40)
+      };
+    });
+    this.leads = [
+      { lead_id:'L1', first_name:'Alex', last_name:'Turner', phone:'(602) 555-0101', email:'a.turner@email.com', store_id:'S1', rep_id:'R1', timestamp:new Date(Date.now()-3600000).toISOString(), status:'Hot' },
+      { lead_id:'L2', first_name:'Morgan', last_name:'Lee', phone:'(602) 555-0102', email:'m.lee@email.com', store_id:'S2', rep_id:'R4', timestamp:new Date(Date.now()-7200000).toISOString(), status:'Warm' },
+      { lead_id:'L3', first_name:'Casey', last_name:'Park', phone:'(602) 555-0103', email:'c.park@email.com', store_id:'S1', rep_id:'R2', timestamp:new Date(Date.now()-10800000).toISOString(), status:'Converted' },
+      { lead_id:'L4', first_name:'Riley', last_name:'Davis', phone:'(602) 555-0104', email:'r.davis@email.com', store_id:'S4', rep_id:'R3', timestamp:new Date(Date.now()-86400000).toISOString(), status:'New' },
+    ];
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// CSV PARSER
+// ═══════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  return lines.map(line => {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let c of line) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur);
+    return cols.map(c => c.replace(/^"|"$/g, '').trim());
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+const pageNames = {
+  exec: 'Executive Revenue Command Center',
+  stores: 'Store Performance Engine',
+  reps: 'Sales Rep Leaderboard',
+  activations: 'Activation Velocity Tracker',
+  accessories: 'Accessories Profit Engine',
+  funnel: 'Conversion Funnel Intelligence',
+  flow: 'Customer Flow Engine',
+  profit: 'Profit Optimization Dashboard',
+  coaching: 'Coaching & Alerts System',
+  goals: 'Daily Revenue Goal Tracker',
+  leads: 'Lead Capture'
+};
+let currentPage = 'exec';
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('page-title').textContent = pageNames[page] || page;
+  event.currentTarget.classList.add('active');
+  currentPage = page;
+  renderPage(page);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SYNC STATUS UI
+// ═══════════════════════════════════════════════════════════
+function updateSyncStatus(state) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  const time = document.getElementById('sync-time');
+  dot.className = 'sync-dot ' + state;
+  if (state === 'connected') { label.textContent = 'Connected'; }
+  else if (state === 'syncing') { label.textContent = 'Syncing…'; }
+  else { label.textContent = 'Offline'; }
+  if (DataLayer.lastSync) {
+    time.textContent = DataLayer.lastSync.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════
+function fmt$(n, dec=0) { return '$' + (n||0).toLocaleString('en-US', {minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+function fmtPct(n) { return (n||0).toFixed(1) + '%'; }
+function fmtNum(n) { return (n||0).toLocaleString('en-US'); }
+
+function healthScore(s) {
+  const convW = (s.conversion_rate / 35) * 30;
+  const revW = (s.goal_progress / 100) * 40;
+  const accW = s.activations > 0 ? Math.min((s.accessories_revenue / s.activations) / 100, 1) * 30 : 0;
+  return Math.min(100, Math.round(convW + revW + accW));
+}
+
+function healthColor(score) {
+  if (score >= 75) return '#00c48c';
+  if (score >= 50) return '#ffb020';
+  return '#ff3b5c';
+}
+
+function healthClass(score) {
+  if (score >= 75) return 'green';
+  if (score >= 50) return 'amber';
+  return 'red';
+}
+
+function animateCounter(el, target, prefix='', suffix='', dec=0) {
+  const start = 0; const duration = 900;
+  const startTime = performance.now();
+  const update = (now) => {
+    const t = Math.min((now - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1-t, 3);
+    const val = start + (target - start) * ease;
+    el.textContent = prefix + val.toLocaleString('en-US', {minimumFractionDigits:dec,maximumFractionDigits:dec}) + suffix;
+    if (t < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+
+// SVG bar chart
+function drawBarChart(svgId, labels, values, color='#1e66ff', goalLine=null) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const W = svg.parentElement.offsetWidth || 400;
+  const H = 180; const pad = {top:20,right:16,bottom:36,left:52};
+  const maxV = Math.max(...values, 1);
+  const bW = Math.max(4, (W - pad.left - pad.right) / values.length - 6);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  // Grid lines
+  [0.25,0.5,0.75,1].forEach(f => {
+    const y = pad.top + (H - pad.top - pad.bottom) * (1 - f);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', pad.left); line.setAttribute('x2', W - pad.right);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#e4e6f0'); line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x', pad.left - 4); t.setAttribute('y', y + 4);
+    t.setAttribute('text-anchor','end'); t.setAttribute('fill','#9499b8');
+    t.setAttribute('font-size','9'); t.setAttribute('font-family','DM Mono,monospace');
+    t.textContent = maxV > 999 ? '$' + Math.round(maxV*f/1000)+'k' : Math.round(maxV*f);
+    svg.appendChild(t);
+  });
+
+  values.forEach((v, i) => {
+    const x = pad.left + i * ((W - pad.left - pad.right) / values.length) + 3;
+    const barH = ((v / maxV) * (H - pad.top - pad.bottom));
+    const y = H - pad.bottom - barH;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', x); rect.setAttribute('y', H - pad.bottom);
+    rect.setAttribute('width', bW); rect.setAttribute('height', 0);
+    rect.setAttribute('rx', '4'); rect.setAttribute('fill', color); rect.setAttribute('opacity','0.85');
+    rect.classList.add('chart-bar');
+    rect.setAttribute('title', labels[i] + ': ' + v);
+    svg.appendChild(rect);
+    // animate
+    setTimeout(() => {
+      rect.setAttribute('y', y); rect.setAttribute('height', barH);
+      rect.style.transition = 'all 0.7s cubic-bezier(0.4,0,0.2,1)';
+    }, 50 + i * 40);
+    // label
+    if (labels[i]) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', x + bW/2); t.setAttribute('y', H - pad.bottom + 14);
+      t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#9499b8');
+      t.setAttribute('font-size','9'); t.setAttribute('font-family','DM Mono,monospace');
+      t.textContent = labels[i].substring(0,8);
+      svg.appendChild(t);
+    }
+  });
+
+  // Goal line
+  if (goalLine !== null) {
+    const y = pad.top + (H - pad.top - pad.bottom) * (1 - goalLine/maxV);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', pad.left); line.setAttribute('x2', W - pad.right);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke','#ff3b5c'); line.setAttribute('stroke-width','1.5');
+    line.setAttribute('stroke-dasharray','5,3');
+    svg.appendChild(line);
+  }
+}
+
+function drawLineChart(svgId, labels, values, color='#1e66ff', fillColor='') {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const W = svg.parentElement.offsetWidth || 400;
+  const H = 200; const pad = {top:16,right:16,bottom:36,left:52};
+  const maxV = Math.max(...values, 1);
+  const n = values.length;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+
+  const xs = values.map((_,i) => pad.left + (i/(n-1||1))*(W-pad.left-pad.right));
+  const ys = values.map(v => pad.top + (1 - v/maxV)*(H-pad.top-pad.bottom));
+
+  // grid
+  [0.25,0.5,0.75,1].forEach(f => {
+    const y = pad.top + (H-pad.top-pad.bottom)*(1-f);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',pad.left); line.setAttribute('x2',W-pad.right);
+    line.setAttribute('y1',y); line.setAttribute('y2',y);
+    line.setAttribute('stroke','#e4e6f0'); line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',pad.left-4); t.setAttribute('y',y+4);
+    t.setAttribute('text-anchor','end'); t.setAttribute('fill','#9499b8');
+    t.setAttribute('font-size','9'); t.setAttribute('font-family','DM Mono,monospace');
+    t.textContent = maxV>999?'$'+Math.round(maxV*f/1000)+'k':Math.round(maxV*f);
+    svg.appendChild(t);
+  });
+
+  // fill area
+  if (fillColor) {
+    const d = `M ${xs[0]} ${H-pad.bottom} L ${xs.map((x,i) => x+' '+ys[i]).join(' L ')} L ${xs[xs.length-1]} ${H-pad.bottom} Z`;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',d); path.setAttribute('fill',fillColor); path.setAttribute('opacity','0.15');
+    svg.appendChild(path);
+  }
+
+  // line
+  const d = xs.map((x,i)=>(i===0?'M':'L')+x+' '+ys[i]).join(' ');
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',d); path.setAttribute('fill','none');
+  path.setAttribute('stroke',color); path.setAttribute('stroke-width','2.5');
+  path.setAttribute('stroke-linejoin','round'); path.setAttribute('stroke-linecap','round');
+  svg.appendChild(path);
+
+  // dots + labels
+  xs.forEach((x,i) => {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x); circle.setAttribute('cy',ys[i]);
+    circle.setAttribute('r','3'); circle.setAttribute('fill',color);
+    svg.appendChild(circle);
+    if (i % Math.ceil(n/8) === 0 || i === n-1) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',x); t.setAttribute('y',H-pad.bottom+14);
+      t.setAttribute('text-anchor','middle'); t.setAttribute('fill','#9499b8');
+      t.setAttribute('font-size','9'); t.setAttribute('font-family','DM Mono,monospace');
+      t.textContent = (labels[i]||'').slice(5); // MM-DD
+      svg.appendChild(t);
+    }
+  });
+}
+
+function drawRing(container, pct, color, label, valueStr) {
+  const r=42, cx=56, cy=56, circ=2*Math.PI*r;
+  const dash = (pct/100)*circ;
+  container.innerHTML = `<div class="ring-wrap">
+    <svg width="112" height="112" viewBox="0 0 112 112">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e4e6f0" stroke-width="10"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="10"
+        stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ/4}"
+        stroke-linecap="round" transform="rotate(0,${cx},${cy})"
+        style="transition:stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1)"/>
+      <text x="${cx}" y="${cy+6}" text-anchor="middle" fill="${color}" font-size="15" font-weight="800" font-family="Syne,sans-serif">${Math.round(pct)}%</text>
+    </svg>
+    <div class="ring-label">${label}</div>
+    <div class="ring-value">${valueStr}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMPUTED METRICS
+// ═══════════════════════════════════════════════════════════
+function getMetrics() {
+  const { stores, reps, kpis, leads } = DataLayer;
+  const totalRev = stores.reduce((a,s) => a+s.revenue, 0);
+  const totalAct = stores.reduce((a,s) => a+s.activations, 0);
+  const totalAcc = stores.reduce((a,s) => a+s.accessories_revenue, 0);
+  const totalProfit = stores.reduce((a,s) => a+s.profit, 0);
+  const avgConv = stores.length ? stores.reduce((a,s) => a+s.conversion_rate,0)/stores.length : 0;
+  const goalPct = (totalRev / Config.annualGoal) * 100;
+  const today = new Date();
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const daysRemaining = 365 - dayOfYear;
+  const dailyRunrate = daysRemaining > 0 ? (Config.annualGoal - totalRev) / daysRemaining : 0;
+  const avgDailyRev = dayOfYear > 0 ? totalRev / dayOfYear : 0;
+  const forecast = avgDailyRev * 365;
+  const attachRate = totalAct > 0 ? (totalAcc / totalAct) : 0;
+  const profitPerAct = totalAct > 0 ? totalProfit / totalAct : 0;
+  const leadsTotal = leads.length;
+  const converted = leads.filter(l => l.status === 'Converted').length;
+  const leadToSale = leadsTotal > 0 ? (converted/leadsTotal)*100 : 0;
+  const topRep = reps.slice().sort((a,b) => b.revenue-a.revenue)[0];
+  const topStore = stores.slice().sort((a,b) => b.revenue-a.revenue)[0];
+
+  // today KPIs from latest kpi entry
+  const todayKpi = kpis.slice().sort((a,b) => b.date.localeCompare(a.date))[0] || {};
+  const recentKpis = kpis.slice().sort((a,b) => a.date.localeCompare(b.date)).slice(-7);
+  const avg7 = recentKpis.length ? recentKpis.reduce((a,k)=>a+k.revenue,0)/recentKpis.length : 0;
+  const momentum = avg7 > Config.dailyGoal ? '🟢 On Track' : avg7 > Config.dailyGoal * 0.85 ? '🟡 At Risk' : '🔴 Behind';
+
+  return { totalRev, totalAct, totalAcc, totalProfit, avgConv, goalPct, daysRemaining,
+    dailyRunrate, avgDailyRev, forecast, attachRate, profitPerAct, leadsTotal,
+    converted, leadToSale, topRep, topStore, todayKpi, avg7, momentum };
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+function renderAllPages() { renderPage(currentPage); }
+
+function renderPage(page) {
+  const r = { exec: renderExec, stores: renderStores, reps: renderReps,
+    activations: renderActivations, accessories: renderAccessories,
+    funnel: renderFunnel, flow: renderFlow, profit: renderProfit,
+    coaching: renderCoaching, goals: renderGoals, leads: renderLeadsPage };
+  if (r[page]) r[page]();
+}
+
+function makeKPICard(label, value, sub, accentClass='', icon='', delta='', deltaDir='') {
+  const iconHtml = icon ? `<div class="kpi-icon ${accentClass}">${icon}</div>` : '';
+  const deltaHtml = delta ? `<div class="kpi-delta ${deltaDir}">${deltaDir==='up'?'↑':'↓'} ${delta}</div>` : '';
+  return `<div class="kpi-card ${accentClass}">
+    ${iconHtml}
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-value">${value}</div>
+    ${sub ? `<div class="kpi-sub">${sub}</div>` : ''}
+    ${deltaHtml}
+    </div>`;
+}
+
+function renderExec() {
+  const m = getMetrics();
+  // Hero
+  const el = document.getElementById('exec-rev');
+  animateCounter(el, m.totalRev, '$', '', 0);
+  document.getElementById('exec-pct').textContent = m.goalPct.toFixed(1) + '%';
+  setTimeout(() => { document.getElementById('exec-progress').style.width = Math.min(m.goalPct,100) + '%'; }, 100);
+  document.getElementById('exec-runrate').textContent = fmt$(m.dailyRunrate);
+  document.getElementById('exec-days').textContent = m.daysRemaining;
+  document.getElementById('exec-forecast').textContent = fmt$(m.forecast);
+  document.getElementById('exec-momentum').textContent = m.momentum;
+
+  // KPIs
+  const kpiEl = document.getElementById('exec-kpis');
+  kpiEl.innerHTML = [
+    makeKPICard('Total Activations', fmtNum(m.totalAct), 'All stores YTD', '', svgIcon('zap')),
+    makeKPICard('Accessories Revenue', fmt$(m.totalAcc), 'Attach rate: ' + fmtPct(m.attachRate * 100), 'green', svgIcon('dollar'), '12.4%', 'up'),
+    makeKPICard('Avg Conv Rate', fmtPct(m.avgConv), 'Traffic → Activation', m.avgConv>=30?'green':m.avgConv>=20?'amber':'red', svgIcon('funnel')),
+    makeKPICard('Profit / Activation', fmt$(m.profitPerAct, 0), 'Across all stores', 'green', svgIcon('check')),
+    makeKPICard('Lead → Sale', fmtPct(m.leadToSale), `${m.converted} / ${m.leadsTotal} leads`, '', svgIcon('users')),
+    makeKPICard('Daily Run-Rate', fmt$(m.dailyRunrate), `${m.daysRemaining} days left`, m.avgDailyRev>=m.dailyRunrate?'green':'red', svgIcon('target')),
+  ].join('');
+
+  // Health list
+  const healthEl = document.getElementById('exec-health-list');
+  healthEl.innerHTML = DataLayer.stores.map(s => {
+    const score = healthScore(s);
+    const c = healthColor(score);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;font-size:13px;font-weight:600">${s.store_name}</div>
+      <div style="flex:2">
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${score}%;background:${c}"></div></div>
+      </div>
+      <div style="font-family:Syne,sans-serif;font-weight:800;font-size:14px;color:${c};width:36px;text-align:right">${score}</div>
+    </div>`;
+  }).join('');
+
+  // Bar chart
+  const sorted = DataLayer.stores.slice().sort((a,b) => b.revenue-a.revenue);
+  drawBarChart('exec-bar-chart', sorted.map(s=>s.store_name.split(' ')[0]), sorted.map(s=>s.revenue), '#1e66ff');
+
+  // Top rep
+  const tr = m.topRep;
+  document.getElementById('exec-top-rep').innerHTML = tr ? `
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 0">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1e66ff,#3d8eff);display:flex;align-items:center;justify-content:center;color:#fff;font-family:Syne,sans-serif;font-weight:800;font-size:20px">${tr.rep_name[0]}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:15px">${tr.rep_name}</div>
+        <div style="color:var(--text3);font-size:12px;margin-top:2px">${getStoreName(tr.store_id)}</div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <span class="badge badge-gold">🥇 #1 Rep</span>
+          <span style="font-size:12px;color:var(--text2)">${fmt$(tr.revenue)} revenue</span>
+          <span style="font-size:12px;color:var(--green)">${tr.activations} activations</span>
+        </div>
+        <div style="margin-top:8px">
+          <div class="progress-bar-track"><div class="progress-bar-fill green" style="width:${Math.min(tr.performance_score,100)}%"></div></div>
+          <div class="progress-label"><span>Performance Score</span><span>${tr.performance_score}/100</span></div>
+        </div>
+      </div>
+    </div>` : '<div style="color:var(--text3);font-size:13px;padding:16px">No rep data available</div>';
+
+  // Alerts
+  renderExecAlerts();
+}
+
+function renderExecAlerts() {
+  const m = getMetrics();
+  const { stores, reps } = DataLayer;
+  const alerts = [];
+  if (m.avgDailyRev < m.dailyRunrate * 0.8) alerts.push({ type:'red', title:'Revenue at Risk', desc:`Running ${fmtPct(100-m.avgDailyRev/m.dailyRunrate*100)} below required daily pace to hit $1M goal.` });
+  stores.forEach(s => {
+    if (s.conversion_rate < 20) alerts.push({ type:'amber', title:`Low Conversion: ${s.store_name}`, desc:`Conv rate ${fmtPct(s.conversion_rate)} — below 20% threshold. Review traffic strategies.` });
+    if (s.goal_progress < 15) alerts.push({ type:'red', title:`Underperforming: ${s.store_name}`, desc:`Only ${fmtPct(s.goal_progress)} of annual goal reached. Needs immediate intervention.` });
+  });
+  if (m.attachRate < 0.2) alerts.push({ type:'amber', title:'Accessories Attach Rate Low', desc:`${fmtPct(m.attachRate*100)} attach rate — target is 30%+. Train reps on bundling.` });
+  if (!alerts.length) alerts.push({ type:'green', title:'All Systems On Track', desc:'Revenue pace, conversion rates, and accessories are hitting targets.' });
+  document.getElementById('exec-alerts').innerHTML = alerts.slice(0,4).map(a => `
+    <div class="alert-card ${a.type}">
+      <div class="alert-icon">${a.type==='red'?'🚨':a.type==='amber'?'⚠️':'✅'}</div>
+      <div><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div></div>
+    </div>`).join('');
+}
+
+function renderStores() {
+  const { stores } = DataLayer;
+  const totalRev = stores.reduce((a,s)=>a+s.revenue,0);
+  document.getElementById('stores-kpis').innerHTML = [
+    makeKPICard('Total Stores', stores.length, 'Active locations', '', svgIcon('home')),
+    makeKPICard('Combined Revenue', fmt$(totalRev), 'All stores YTD', 'green', svgIcon('dollar')),
+    makeKPICard('Top Store Rev', fmt$(Math.max(...stores.map(s=>s.revenue),0)), stores.slice().sort((a,b)=>b.revenue-a.revenue)[0]?.store_name, 'green', svgIcon('zap')),
+    makeKPICard('Avg Health Score', Math.round(stores.reduce((a,s)=>a+healthScore(s),0)/(stores.length||1)), 'Out of 100', '', svgIcon('check')),
+  ].join('');
+
+  document.getElementById('stores-updated').textContent = DataLayer.lastSync ? 'Updated ' + DataLayer.lastSync.toLocaleTimeString() : '';
+  const tbody = document.getElementById('stores-tbody');
+  const sorted = stores.slice().sort((a,b)=>b.revenue-a.revenue);
+  tbody.innerHTML = sorted.map(s => {
+    const hs = healthScore(s); const hc = healthClass(hs); const hColor = healthColor(hs);
+    return `<tr>
+      <td><span style="font-weight:600">${s.store_name}</span></td>
+      <td>${fmt$(s.revenue)}</td>
+      <td>${fmtNum(s.activations)}</td>
+      <td>${fmt$(s.accessories_revenue)}</td>
+      <td><span class="badge badge-${s.conversion_rate>=30?'green':s.conversion_rate>=20?'amber':'red'}">${fmtPct(s.conversion_rate)}</span></td>
+      <td>${fmt$(s.profit)}</td>
+      <td>
+        <div class="progress-bar-track" style="width:80px"><div class="progress-bar-fill ${hc}" style="width:${Math.min(s.goal_progress,100)}%"></div></div>
+        <div style="font-size:10px;color:var(--text3)">${fmtPct(s.goal_progress)}</div>
+      </td>
+      <td><span style="font-family:Syne,sans-serif;font-weight:800;color:${hColor}">${hs}</span></td>
+    </tr>`;
+  }).join('');
+
+  const kpis = DataLayer.kpis.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);
+  if (kpis.length) drawLineChart('stores-line-chart', kpis.map(k=>k.date), kpis.map(k=>k.revenue), '#1e66ff', '#1e66ff');
+}
+
+function renderReps() {
+  const { reps } = DataLayer;
+  const sorted = reps.slice().sort((a,b)=>b.revenue-a.revenue);
+  document.getElementById('reps-kpis').innerHTML = [
+    makeKPICard('Total Reps', reps.length, 'Active salespeople', '', svgIcon('users')),
+    makeKPICard('Top Revenue', fmt$(sorted[0]?.revenue||0), sorted[0]?.rep_name||'—', 'green', svgIcon('dollar')),
+    makeKPICard('Avg Score', Math.round(reps.reduce((a,r)=>a+r.performance_score,0)/(reps.length||1)), 'Performance index', '', svgIcon('zap')),
+    makeKPICard('Needs Coaching', reps.filter(r=>r.performance_score<70).length, 'Score < 70', 'amber', svgIcon('alert')),
+  ].join('');
+
+  const tbody = document.getElementById('reps-tbody');
+  tbody.innerHTML = sorted.map((r,i) => {
+    const badge = i===0?'badge-gold 🥇':i===1?'badge-silver 🥈':i===2?'badge-bronze 🥉':'badge-blue';
+    const badgeText = i===0?'Gold':i===1?'Silver':i===2?'Bronze':'Active';
+    const needs = r.performance_score < 70;
+    const rankIcon = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    return `<tr>
+      <td><span class="rank-num">${rankIcon||'#'+(i+1)}</span></td>
+      <td><span style="font-weight:600">${r.rep_name}</span></td>
+      <td style="color:var(--text3);font-size:12px">${getStoreName(r.store_id)}</td>
+      <td>${fmt$(r.revenue)}</td>
+      <td>${fmtNum(r.activations)}</td>
+      <td>${fmt$(r.accessories)}</td>
+      <td><span class="badge badge-${r.conversion_rate>=35?'green':r.conversion_rate>=25?'amber':'red'}">${fmtPct(r.conversion_rate)}</span></td>
+      <td>
+        <div class="progress-bar-track" style="width:60px"><div class="progress-bar-fill ${r.performance_score>=75?'green':r.performance_score>=60?'':'red'}" style="width:${r.performance_score}%"></div></div>
+        <div style="font-size:10px;color:var(--text3)">${r.performance_score}</div>
+      </td>
+      <td>${needs?'<span class="badge badge-red">⚑ Coaching</span>':'<span class="badge badge-green">✓ On Track</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  drawBarChart('reps-bar-chart', sorted.map(r=>r.rep_name.split(' ')[0]), sorted.map(r=>r.revenue), '#1e66ff');
+}
+
+function renderActivations() {
+  const { stores, kpis } = DataLayer;
+  const totalAct = stores.reduce((a,s)=>a+s.activations,0);
+  const dailyActGoal = Math.round(Config.annualGoal / 100 / 365); // assume ~$100/activation
+  const recentKpis = kpis.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
+
+  document.getElementById('act-kpis').innerHTML = [
+    makeKPICard('Total Activations', fmtNum(totalAct), 'YTD all stores', '', svgIcon('zap')),
+    makeKPICard('Avg Daily Acts', Math.round(totalAct/365), 'Per day pace', '', svgIcon('activity')),
+    makeKPICard('Best Store', stores.slice().sort((a,b)=>b.activations-a.activations)[0]?.store_name||'—', fmtNum(Math.max(...stores.map(s=>s.activations),0))+' acts', 'green', svgIcon('home')),
+    makeKPICard('Activation Goal', fmtNum(dailyActGoal), 'Per day target', 'blue', svgIcon('target')),
+  ].join('');
+
+  // Gauge
+  const pct = Math.min((totalAct/(dailyActGoal*365))*100, 100);
+  const svg = document.getElementById('act-gauge');
+  const W = svg.parentElement.offsetWidth || 300;
+  svg.setAttribute('viewBox', `0 0 ${W} 180`);
+  const cx=W/2, cy=130, r=80;
+  const arc=(pct/100)*Math.PI;
+  const sx=cx-r*Math.cos(0), sy=cy-r*Math.sin(0);
+  const ex=cx-r*Math.cos(arc), ey=cy-r*Math.sin(arc);
+  svg.innerHTML = `
+    <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="#e4e6f0" stroke-width="14" stroke-linecap="round"/>
+    <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${ex} ${ey}" fill="none" stroke="${pct>=75?'#00c48c':pct>=50?'#ffb020':'#ff3b5c'}" stroke-width="14" stroke-linecap="round"/>
+    <text x="${cx}" y="${cy-20}" text-anchor="middle" fill="#0d0f1a" font-size="32" font-weight="800" font-family="Syne,sans-serif">${Math.round(pct)}%</text>
+    <text x="${cx}" y="${cy+2}" text-anchor="middle" fill="#9499b8" font-size="12" font-family="DM Mono,monospace">OF ANNUAL GOAL</text>
+    <text x="${cx-r-10}" y="${cy+20}" text-anchor="middle" fill="#9499b8" font-size="10">0</text>
+    <text x="${cx+r+10}" y="${cy+20}" text-anchor="middle" fill="#9499b8" font-size="10">${fmtNum(dailyActGoal*365)}</text>`;
+
+  if (recentKpis.length) drawLineChart('act-trend', recentKpis.map(k=>k.date), recentKpis.map(k=>k.activations), '#1e66ff', '#1e66ff');
+  const sorted = stores.slice().sort((a,b)=>b.activations-a.activations);
+  drawBarChart('act-by-store', sorted.map(s=>s.store_name.split(' ')[0]), sorted.map(s=>s.activations), '#1e66ff');
+}
+
+function renderAccessories() {
+  const { stores, reps, kpis } = DataLayer;
+  const totalAcc = stores.reduce((a,s)=>a+s.accessories_revenue,0);
+  const totalAct = stores.reduce((a,s)=>a+s.activations,0);
+  const attachRate = totalAct>0?(totalAcc/totalAct):0;
+  const totalRev = stores.reduce((a,s)=>a+s.revenue,0);
+
+  document.getElementById('acc-kpis').innerHTML = [
+    makeKPICard('Accessories Revenue', fmt$(totalAcc), 'YTD', 'green', svgIcon('dollar')),
+    makeKPICard('Attach Rate', fmtPct(attachRate*100), 'Per activation', attachRate>=0.3?'green':attachRate>=0.2?'amber':'red', svgIcon('zap')),
+    makeKPICard('Avg per Activation', fmt$(attachRate,0), 'Accessories $', 'green', svgIcon('dollar')),
+    makeKPICard('% of Total Revenue', fmtPct(totalRev>0?(totalAcc/totalRev)*100:0), 'Attach contribution', '', svgIcon('funnel')),
+  ].join('');
+
+  const sortedReps = reps.slice().sort((a,b)=>b.accessories-a.accessories);
+  const accRate = reps.map(r => r.activations>0?(r.accessories/r.activations)*100:0);
+  drawBarChart('acc-bar', sortedReps.map(r=>r.rep_name.split(' ')[0]), sortedReps.map(r=>r.accessories), '#00c48c');
+
+  // Funnel
+  const funnelEl = document.getElementById('acc-funnel');
+  const stages = [
+    { label:'Activations', val:totalAct, color:'#1e66ff' },
+    { label:'W/ Accessories', val:Math.round(totalAct*attachRate), color:'#00c48c' },
+    { label:'Profit Contrib', val:Math.round(totalAct*attachRate*0.45), color:'#ffb020' },
+  ];
+  renderFunnelEl(funnelEl, stages);
+
+  const recentKpis = kpis.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
+  if (recentKpis.length) drawLineChart('acc-trend', recentKpis.map(k=>k.date), recentKpis.map(k=>k.accessories), '#00c48c', '#00c48c');
+}
+
+function renderFunnelEl(el, stages) {
+  const max = stages[0]?.val || 1;
+  el.innerHTML = stages.map((s,i) => {
+    const w = Math.max(20, (s.val/max)*100);
+    return `${i>0?`<div class="funnel-arrow">▾</div>`:''}
+    <div class="funnel-stage">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${w}%;background:${s.color}">${fmtNum(s.val)}</div>
+      </div>
+      <div class="funnel-val">${i>0?fmtPct((s.val/stages[i-1].val)*100):''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderFunnel() {
+  const { stores } = DataLayer;
+  const totalTraffic = DataLayer.kpis.slice(-30).reduce((a,k)=>a+k.traffic_estimate,0);
+  const totalAct = stores.reduce((a,s)=>a+s.activations,0);
+  const totalAcc = stores.reduce((a,s)=>a+s.accessories_revenue,0)/100;
+  const totalProfit = stores.reduce((a,s)=>a+s.profit,0)/100;
+  const leads = DataLayer.leads.length;
+
+  document.getElementById('funnel-kpis').innerHTML = [
+    makeKPICard('Traffic → Lead', fmtPct(leads/(totalTraffic||1)*100), `${leads} leads captured`, '', svgIcon('funnel')),
+    makeKPICard('Lead → Activation', fmtPct(totalAct/(leads||1)*100), `${totalAct} activations`, 'blue', svgIcon('zap')),
+    makeKPICard('Act → Accessories', fmtPct((totalAcc/totalAct||0)*100), 'Attach rate', 'green', svgIcon('dollar')),
+    makeKPICard('Overall Funnel', fmtPct(totalAct/(totalTraffic||1)*100), 'Traffic to sale', '', svgIcon('check')),
+  ].join('');
+
+  const funnelEl = document.getElementById('main-funnel');
+  const stages = [
+    { label:'Traffic', val:totalTraffic||1000, color:'#1e66ff' },
+    { label:'Leads', val:leads||120, color:'#3d8eff' },
+    { label:'Activations', val:totalAct, color:'#00c48c' },
+    { label:'Accessories', val:Math.round(totalAcc), color:'#ffb020' },
+    { label:'Profit Units', val:Math.round(totalProfit), color:'#ff3b5c' },
+  ];
+  renderFunnelEl(funnelEl, stages);
+
+  // Drop-off
+  const dropoffEl = document.getElementById('funnel-dropoff');
+  dropoffEl.innerHTML = stages.slice(1).map((s,i) => {
+    const prev = stages[i].val;
+    const drop = prev > 0 ? ((prev-s.val)/prev)*100 : 0;
+    const isGood = drop < 50;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);width:100px">${stages[i].label} → ${s.label}</div>
+      <div style="flex:1"><div class="progress-bar-track"><div class="progress-bar-fill ${isGood?'green':'red'}" style="width:${100-drop}%"></div></div></div>
+      <div style="font-size:12px;font-weight:700;color:${isGood?'var(--green)':'var(--red)'}">-${fmtPct(drop)}</div>
+    </div>`;
+  }).join('');
+
+  const sorted = stores.slice().sort((a,b)=>b.conversion_rate-a.conversion_rate);
+  drawBarChart('funnel-by-store', sorted.map(s=>s.store_name.split(' ')[0]), sorted.map(s=>s.conversion_rate), '#1e66ff');
+}
+
+function renderFlow() {
+  const { leads, kpis } = DataLayer;
+  const statuses = ['New','Hot','Warm','Cold','Converted','Lost'];
+  const counts = {};
+  statuses.forEach(s => counts[s] = leads.filter(l=>l.status===s).length);
+
+  document.getElementById('flow-kpis').innerHTML = [
+    makeKPICard('Total Leads', leads.length, 'In pipeline', '', svgIcon('users')),
+    makeKPICard('Hot Leads', counts['Hot']||0, 'Need follow-up', 'red', svgIcon('zap')),
+    makeKPICard('Converted', counts['Converted']||0, 'Sales closed', 'green', svgIcon('check')),
+    makeKPICard('Lost Leads', counts['Lost']||0, 'Missed opps', 'amber', svgIcon('alert')),
+  ].join('');
+
+  // Heatmap (days x hours mockup)
+  const heatEl = document.getElementById('flow-heatmap');
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const hours = ['9a','10a','11a','12p','1p','2p','3p','4p','5p','6p','7p','8p'];
+  const cellW = 34, cellH = 26;
+  const svgW = days.length * cellW + 40, svgH = hours.length * cellH + 30;
+  let heatSvg = `<svg viewBox="0 0 ${svgW} ${svgH}" width="100%">`;
+  hours.forEach((h,hi) => {
+    heatSvg += `<text x="36" y="${hi*cellH+cellH/2+4+16}" text-anchor="end" fill="#9499b8" font-size="9" font-family="DM Mono,monospace">${h}</text>`;
+    days.forEach((d,di) => {
+      const val = Math.random();
+      const alpha = (0.1 + val*0.9).toFixed(2);
+      const color = val>0.7?`rgba(30,102,255,${alpha})`:val>0.4?`rgba(0,196,140,${alpha})`:`rgba(228,230,240,0.8)`;
+      heatSvg += `<rect x="${di*cellW+40}" y="${hi*cellH+16}" width="${cellW-2}" height="${cellH-2}" rx="4" fill="${color}"/>`;
+    });
+  });
+  days.forEach((d,di) => {
+    heatSvg += `<text x="${di*cellW+cellW/2+40}" y="12" text-anchor="middle" fill="#9499b8" font-size="9" font-family="DM Mono,monospace">${d}</text>`;
+  });
+  heatSvg += '</svg>';
+  heatEl.innerHTML = heatSvg;
+
+  // Pipeline
+  const pipeEl = document.getElementById('flow-pipeline');
+  pipeEl.innerHTML = statuses.map(s => {
+    const cnt = counts[s]||0;
+    const colors = {New:'blue',Hot:'red',Warm:'amber',Cold:'',Converted:'green',Lost:'red'};
+    const pct = leads.length>0?(cnt/leads.length)*100:0;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span class="badge badge-${colors[s]||'blue'}" style="width:72px;justify-content:center">${s}</span>
+      <div style="flex:1"><div class="progress-bar-track"><div class="progress-bar-fill ${colors[s]||''}" style="width:${pct}%"></div></div></div>
+      <span style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;width:24px;text-align:right">${cnt}</span>
+    </div>`;
+  }).join('');
+
+  const recentKpis = kpis.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
+  if (recentKpis.length) drawLineChart('flow-leads-chart', recentKpis.map(k=>k.date), recentKpis.map(k=>k.traffic_estimate), '#1e66ff', '#1e66ff');
+}
+
+function renderProfit() {
+  const { stores, kpis } = DataLayer;
+  const totalProfit = stores.reduce((a,s)=>a+s.profit,0);
+  const totalAct = stores.reduce((a,s)=>a+s.activations,0);
+  const totalAcc = stores.reduce((a,s)=>a+s.accessories_revenue,0);
+  const profitPerAct = totalAct>0?totalProfit/totalAct:0;
+  const totalRev = stores.reduce((a,s)=>a+s.revenue,0);
+  const margin = totalRev>0?(totalProfit/totalRev)*100:0;
+
+  document.getElementById('profit-kpis').innerHTML = [
+    makeKPICard('Total Profit', fmt$(totalProfit), 'YTD all stores', 'green', svgIcon('dollar')),
+    makeKPICard('Profit / Activation', fmt$(profitPerAct,0), 'Average', 'green', svgIcon('zap')),
+    makeKPICard('Profit Margin', fmtPct(margin), 'Net margin', margin>=25?'green':margin>=15?'amber':'red', svgIcon('check')),
+    makeKPICard('Acc Profit Contrib', fmtPct(totalRev>0?(totalAcc/totalRev)*100:0), 'Accessories % of rev', 'green', svgIcon('dollar')),
+  ].join('');
+
+  const sorted = stores.slice().sort((a,b)=>b.profit/b.activations-a.profit/a.activations);
+  drawBarChart('profit-bar', sorted.map(s=>s.store_name.split(' ')[0]), sorted.map(s=>s.activations>0?Math.round(s.profit/s.activations):0), '#00c48c');
+
+  const ringsEl = document.getElementById('profit-rings');
+  ringsEl.innerHTML = '<div id="pr1"></div><div id="pr2"></div><div id="pr3"></div>';
+  setTimeout(() => {
+    drawRing(document.getElementById('pr1'), margin, '#00c48c', 'Net Margin', fmtPct(margin));
+    drawRing(document.getElementById('pr2'), Math.min((profitPerAct/150)*100,100), '#1e66ff', 'Profit/Act', fmt$(profitPerAct,0));
+    const accPct = totalAct>0?(totalAcc/totalRev)*100:0;
+    drawRing(document.getElementById('pr3'), accPct, '#ffb020', 'Acc Rate', fmtPct(accPct));
+  }, 50);
+
+  const cumulativeKpis = kpis.slice().sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);
+  let cum=0;
+  const cumVals = cumulativeKpis.map(k=>{ cum+=k.profit; return cum; });
+  if (cumulativeKpis.length) drawLineChart('profit-trend', cumulativeKpis.map(k=>k.date), cumVals, '#00c48c', '#00c48c');
+}
+
+function renderCoaching() {
+  const { stores, reps } = DataLayer;
+  const m = getMetrics();
+
+  document.getElementById('coaching-kpis').innerHTML = [
+    makeKPICard('Reps Needing Help', reps.filter(r=>r.performance_score<70).length, 'Score < 70', 'red', svgIcon('users')),
+    makeKPICard('Stores At Risk', stores.filter(s=>s.conversion_rate<22||s.goal_progress<15).length, 'Below thresholds', 'amber', svgIcon('alert')),
+    makeKPICard('Active Alerts', reps.filter(r=>r.performance_score<70).length + stores.filter(s=>s.goal_progress<15).length, 'Total action items', 'red', svgIcon('zap')),
+    makeKPICard('System Health', Math.round(stores.reduce((a,s)=>a+healthScore(s),0)/(stores.length||1)), 'Avg store score', '', svgIcon('check')),
+  ].join('');
+
+  // Alerts
+  const alertsEl = document.getElementById('coaching-alerts');
+  const alerts = [];
+  if (m.avgDailyRev < m.dailyRunrate) alerts.push({ type:'red', icon:'🚨', title:'Revenue Pace Critical', desc:`Daily avg ${fmt$(m.avgDailyRev)} vs needed ${fmt$(m.dailyRunrate)}. Push high-value activations.` });
+  stores.forEach(s => {
+    if (s.conversion_rate < 20) alerts.push({ type:'red', icon:'📉', title:`Conv Rate Crisis: ${s.store_name}`, desc:`${fmtPct(s.conversion_rate)} conversion. Average is ${fmtPct(m.avgConv)}. Needs floor coaching.` });
+    else if (s.conversion_rate < 28) alerts.push({ type:'amber', icon:'⚠️', title:`Low Conv: ${s.store_name}`, desc:`${fmtPct(s.conversion_rate)} — below 28% target. Review sales process.` });
+    if (s.goal_progress < 12) alerts.push({ type:'red', icon:'🎯', title:`Goal Gap: ${s.store_name}`, desc:`Only ${fmtPct(s.goal_progress)} of annual goal. Escalate to district manager.` });
+  });
+  if (!alerts.length) alerts.push({ type:'green', icon:'✅', title:'All Metrics Healthy', desc:'No urgent coaching needs identified. Keep reinforcing winning behaviors.' });
+  alertsEl.innerHTML = alerts.slice(0,6).map(a => `
+    <div class="alert-card ${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div></div>
+    </div>`).join('');
+  document.getElementById('alert-badge').textContent = alerts.filter(a=>a.type==='red').length;
+
+  // Rep coaching
+  const repEl = document.getElementById('coaching-reps');
+  const lowReps = reps.filter(r=>r.performance_score<75).sort((a,b)=>a.performance_score-b.performance_score);
+  repEl.innerHTML = lowReps.length ? lowReps.map(r => {
+    const gap = 75 - r.performance_score;
+    const suggestions = [];
+    if (r.conversion_rate < 28) suggestions.push('Practice closing techniques');
+    if (r.accessories < 10000) suggestions.push('Focus on accessory bundling');
+    if (r.activations < 100) suggestions.push('Increase floor engagement');
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:34px;height:34px;border-radius:50%;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue)">${r.rep_name[0]}</div>
+        <div style="flex:1"><div style="font-weight:600;font-size:13px">${r.rep_name}</div><div style="font-size:11px;color:var(--text3)">${getStoreName(r.store_id)}</div></div>
+        <span class="badge badge-red">Score: ${r.performance_score}</span>
+      </div>
+      <div style="margin-bottom:6px"><div class="progress-bar-track"><div class="progress-bar-fill red" style="width:${r.performance_score}%"></div></div></div>
+      ${suggestions.map(s=>`<div style="font-size:11px;color:var(--text2);margin-top:3px">→ ${s}</div>`).join('')}
+    </div>`;
+  }).join('') : '<div style="color:var(--green);font-size:13px;padding:16px;text-align:center">✅ All reps performing above coaching threshold</div>';
+
+  // Matrix
+  const matrixEl = document.getElementById('coaching-matrix');
+  matrixEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(${stores.length},1fr);gap:10px;padding:8px 0">` +
+    stores.map(s => {
+      const hs = healthScore(s); const hc = healthColor(hs);
+      return `<div style="text-align:center;padding:16px 8px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
+        <div style="font-family:Syne,sans-serif;font-weight:800;font-size:24px;color:${hc}">${hs}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">${s.store_name.split(' ')[0]}</div>
+        <div class="health-status" style="background:${hc}22;color:${hc};margin-top:6px">${hs>=75?'Healthy':hs>=50?'At Risk':'Critical'}</div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+function renderGoals() {
+  const { kpis } = DataLayer;
+  const sorted = kpis.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const recent30 = sorted.slice(-30);
+  const today = recent30[recent30.length-1] || {};
+  const todayRev = today.revenue || 0;
+  const pct = Math.min((todayRev/Config.dailyGoal)*100,100);
+  const avg7 = recent30.slice(-7).reduce((a,k)=>a+k.revenue,0)/(Math.min(recent30.slice(-7).length,7)||1);
+  const bestDay = Math.max(...recent30.map(k=>k.revenue),0);
+
+  const now = new Date();
+  const closeHour = 21, openHour = 9;
+  const hoursLeft = Math.max(0, closeHour - now.getHours() - now.getMinutes()/60);
+  const revenueNeeded = Math.max(0, Config.dailyGoal - todayRev);
+  const perHour = hoursLeft > 0 ? revenueNeeded / hoursLeft : 0;
+
+  document.getElementById('goals-today').textContent = fmt$(todayRev);
+  document.getElementById('goals-today-sub').textContent = `Today's Revenue vs ${fmt$(Config.dailyGoal)} Daily Goal`;
+  document.getElementById('goals-pct').textContent = fmtPct(pct);
+  document.getElementById('goals-goal-label').textContent = fmt$(Config.dailyGoal);
+  setTimeout(() => { document.getElementById('goals-today-bar').style.width = pct + '%'; }, 100);
+  document.getElementById('goals-hours').textContent = hoursLeft.toFixed(1) + 'h';
+  document.getElementById('goals-per-hour').textContent = fmt$(perHour);
+  document.getElementById('goals-best').textContent = fmt$(bestDay);
+  document.getElementById('goals-avg').textContent = fmt$(avg7);
+
+  document.getElementById('goals-kpis').innerHTML = [
+    makeKPICard('Today Revenue', fmt$(todayRev), 'vs ' + fmt$(Config.dailyGoal) + ' goal', todayRev>=Config.dailyGoal?'green':'amber', svgIcon('dollar')),
+    makeKPICard('Today Activations', fmtNum(today.activations||0), 'Units sold today', '', svgIcon('zap')),
+    makeKPICard('Today Accessories', fmt$(today.accessories||0), 'Add-on revenue', 'green', svgIcon('dollar')),
+    makeKPICard('Today Profit', fmt$(today.profit||0), 'Net margin today', 'green', svgIcon('check')),
+  ].join('');
+
+  if (recent30.length) drawBarChart('goals-chart', recent30.map(k=>k.date), recent30.map(k=>k.revenue), '#00c48c', Config.dailyGoal);
+
+  document.getElementById('goals-snapshot').innerHTML = [
+    ['Revenue','green', fmt$(todayRev), `${fmtPct(pct)} of daily goal`],
+    ['Activations','blue', fmtNum(today.activations||0), 'Units today'],
+    ['Accessories','amber', fmt$(today.accessories||0), 'Add-on sales'],
+    ['Profit','green', fmt$(today.profit||0), 'Today net profit'],
+    ['Traffic','', fmtNum(today.traffic_estimate||0), 'Est. customers'],
+  ].map(([l,c,v,s]) => `<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)">
+    <div style="width:8px;height:8px;border-radius:50%;background:${c==='green'?'var(--green)':c==='blue'?'var(--blue)':c==='amber'?'var(--amber)':'var(--text3)'}"></div>
+    <div style="flex:1;font-size:13px;font-weight:500">${l}</div>
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:15px">${v}</div>
+    <div style="font-size:11px;color:var(--text3);width:100px;text-align:right">${s}</div>
+  </div>`).join('');
+}
+
+function renderLeadsPage() {
+  const { leads, stores, reps } = DataLayer;
+
+  // Populate selects
+  const storeSelect = document.getElementById('lf-store');
+  const repSelect = document.getElementById('lf-rep');
+  storeSelect.innerHTML = '<option value="">Select Store…</option>' + stores.map(s=>`<option value="${s.store_id}">${s.store_name}</option>`).join('');
+  repSelect.innerHTML = '<option value="">Select Rep…</option>' + reps.map(r=>`<option value="${r.rep_id}">${r.rep_name}</option>`).join('');
+
+  const total = leads.length;
+  const converted = leads.filter(l=>l.status==='Converted').length;
+  const hot = leads.filter(l=>l.status==='Hot').length;
+
+  document.getElementById('leads-kpis').innerHTML = [
+    makeKPICard('Total Leads', total, 'In system', '', svgIcon('users')),
+    makeKPICard('Hot Leads', hot, 'Ready to close', 'red', svgIcon('zap')),
+    makeKPICard('Converted', converted, 'Closed sales', 'green', svgIcon('check')),
+    makeKPICard('Lead→Sale Rate', fmtPct(total>0?(converted/total)*100:0), 'Conversion %', total>0&&(converted/total)>0.3?'green':'amber', svgIcon('funnel')),
+  ].join('');
+
+  const tbody = document.getElementById('leads-tbody');
+  const statusColors = {Hot:'red',Warm:'amber',New:'blue',Cold:'',Converted:'green',Lost:'red'};
+  const recent = leads.slice().sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).slice(0,20);
+  tbody.innerHTML = recent.map(l => {
+    const ts = new Date(l.timestamp);
+    const timeAgo = timeSince(ts);
+    return `<tr>
+      <td style="font-weight:600">${l.first_name} ${l.last_name}</td>
+      <td style="font-family:DM Mono,monospace;font-size:12px">${l.phone}</td>
+      <td style="font-size:12px;color:var(--text3)">${getStoreName(l.store_id)}</td>
+      <td style="font-size:12px;color:var(--text3)">${getRepName(l.rep_id)}</td>
+      <td><span class="badge badge-${statusColors[l.status]||'blue'}">${l.status}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${timeAgo}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// LEAD FORM
+// ═══════════════════════════════════════════════════════════
+async function submitLead() {
+  const fname = document.getElementById('lf-fname').value.trim();
+  const lname = document.getElementById('lf-lname').value.trim();
+  const phone = document.getElementById('lf-phone').value.trim();
+  const email = document.getElementById('lf-email').value.trim();
+  const store_id = document.getElementById('lf-store').value;
+  const rep_id = document.getElementById('lf-rep').value;
+  if (!fname || !phone) { showLeadMsg('Please fill in First Name and Phone.', 'red'); return; }
+  const lead = {
+    lead_id: 'L' + Date.now(),
+    first_name: fname, last_name: lname, phone, email,
+    store_id, rep_id,
+    timestamp: new Date().toISOString(),
+    status: 'New'
+  };
+  showLeadMsg('Submitting to Google Sheets…', '#1e66ff');
+  try {
+    await DataLayer.exportLead(lead);
+    showLeadMsg('✅ Lead saved successfully!', 'var(--green)');
+    clearLeadForm();
+    renderLeadsPage();
+  } catch(e) {
+    DataLayer.leads.push(lead);
+    DataLayer._cacheToLocal();
+    showLeadMsg('✅ Lead saved locally (Sheets offline)', 'var(--amber)');
+    clearLeadForm();
+    renderLeadsPage();
+  }
+}
+
+function showLeadMsg(msg, color) {
+  const el = document.getElementById('lead-msg');
+  el.style.display = 'block';
+  el.style.color = color;
+  el.textContent = msg;
+}
+
+function clearLeadForm() {
+  ['lf-fname','lf-lname','lf-phone','lf-email'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('lf-store').value = '';
+  document.getElementById('lf-rep').value = '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function getStoreName(id) { return DataLayer.stores.find(s=>s.store_id===id)?.store_name || id || '—'; }
+function getRepName(id) { return DataLayer.reps.find(r=>r.rep_id===id)?.rep_name || id || '—'; }
+
+function timeSince(date) {
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function svgIcon(name) {
+  const icons = {
+    zap: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+    dollar: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
+    funnel: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+    check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+    users: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
+    home: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    target: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+    alert: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    activity: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+  };
+  return icons[name] || '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHEETS CONFIG MODAL
+// ═══════════════════════════════════════════════════════════
+function openSheetsConfig() {
+  document.getElementById('cfg-sheet-id').value = Config.sheetId;
+  document.getElementById('cfg-gid-stores').value = Config.gids.stores;
+  document.getElementById('cfg-gid-reps').value = Config.gids.reps;
+  document.getElementById('cfg-gid-leads').value = Config.gids.leads;
+  document.getElementById('cfg-gid-kpis').value = Config.gids.kpis;
+  document.getElementById('cfg-script-url').value = Config.scriptUrl;
+  document.getElementById('cfg-interval').value = Config.refreshInterval;
+  document.getElementById('cfg-auto').checked = Config.autoRefresh;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function saveConfig() {
+  Config.sheetId = document.getElementById('cfg-sheet-id').value.trim();
+  Config.gids.stores = document.getElementById('cfg-gid-stores').value.trim();
+  Config.gids.reps = document.getElementById('cfg-gid-reps').value.trim();
+  Config.gids.leads = document.getElementById('cfg-gid-leads').value.trim();
+  Config.gids.kpis = document.getElementById('cfg-gid-kpis').value.trim();
+  Config.scriptUrl = document.getElementById('cfg-script-url').value.trim();
+  Config.refreshInterval = parseInt(document.getElementById('cfg-interval').value) || 30;
+  Config.autoRefresh = document.getElementById('cfg-auto').checked;
+  Config.save();
+  closeModal();
+  startAutoRefresh();
+  DataLayer.loadAllData();
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTO REFRESH
+// ═══════════════════════════════════════════════════════════
+let refreshTimer = null;
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  if (Config.autoRefresh && Config.sheetId) {
+    refreshTimer = setInterval(() => DataLayer.loadAllData(), Config.refreshInterval * 1000);
+  }
+}
+
+async function refreshData() {
+  const btn = event.currentTarget;
+  btn.textContent = '↻ Syncing…';
+  await DataLayer.loadAllData();
+  btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Refresh`;
+}
+
+function exportLeads() {
+  const { leads } = DataLayer;
+  const headers = ['lead_id','first_name','last_name','phone','email','store_id','rep_id','timestamp','status'];
+  const rows = leads.map(l => headers.map(h => `"${(l[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'apex-leads-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('resize', () => { renderPage(currentPage); });
+
+Config.load();
+DataLayer._loadFromLocal();
+if (!DataLayer.stores.length) DataLayer._loadDemoData();
+renderPage('exec');
+startAutoRefresh();
+
+// If sheet configured, try to load live data
+if (Config.sheetId) {
+  DataLayer.loadAllData();
+} else {
+  updateSyncStatus('offline');
+  document.getElementById('sync-label').textContent = 'Demo Mode';
+}
+</script>
+</body>
+</html>
